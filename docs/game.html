@@ -107,6 +107,9 @@
     let basketX = window.innerWidth / 2 - 40;
     let currentPlayer = "";
     let gameOver = false;
+    let starInterval = null;
+    let starSpeed = 5; // initial fall speed (pixels per frame)
+    let spawnRate = 1000; // initial spawn rate (milliseconds)
 
     // Move basket with arrow keys
     document.addEventListener("keydown", e => {
@@ -135,9 +138,10 @@
 
     // Move stars downward
     function moveStar(star) {
+      let fallSpeed = starSpeed;
       let starInterval = setInterval(() => {
         let starTop = parseInt(star.style.top);
-        star.style.top = starTop + 5 + "px";
+        star.style.top = starTop + fallSpeed + "px";
 
         // Collision detection
         let basketRect = basket.getBoundingClientRect();
@@ -154,6 +158,8 @@
 
           if (score >= winScore) {
             revealMessage();
+          } else {
+            increaseDifficulty();
           }
         }
 
@@ -165,12 +171,38 @@
       }, 50);
     }
 
-    // Drop stars every second
-    setInterval(createStar, 1000);
+    // Increase difficulty gradually
+    function increaseDifficulty() {
+      // Stars fall faster every 2 points
+      if (score % 2 === 0 && starSpeed < 15) {
+        starSpeed += 1;
+      }
+      // Spawn faster every 3 points
+      if (score % 3 === 0 && spawnRate > 400) {
+        spawnRate -= 100;
+        restartStarSpawner();
+      }
+    }
+
+    // Drop stars at intervals
+    function startStarSpawner() {
+      starInterval = setInterval(createStar, spawnRate);
+    }
+
+    function stopStarSpawner() {
+      clearInterval(starInterval);
+      starInterval = null;
+    }
+
+    function restartStarSpawner() {
+      stopStarSpawner();
+      startStarSpawner();
+    }
 
     // Reveal personalized message
     function revealMessage() {
       gameOver = true;
+      stopStarSpawner();
       let msg = "";
       if (currentPlayer === "Alex") {
         msg = "🌟 Alex, you did it! Secret unlocked: 'The universe is brighter because of you.' 🌟";
@@ -185,6 +217,8 @@
     // Reset game
     function resetGame() {
       score = 0;
+      starSpeed = 5;
+      spawnRate = 1000;
       gameOver = false;
       scoreDisplay.textContent = "Score: 0";
       message.style.display = "none";
@@ -192,6 +226,9 @@
 
       // Remove any leftover stars
       document.querySelectorAll(".star").forEach(star => star.remove());
+
+      stopStarSpawner();
+      if (currentPlayer) startStarSpawner();
     }
 
     // Play again button
