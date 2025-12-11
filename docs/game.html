@@ -36,12 +36,13 @@
       border-radius: 50%;
       box-shadow: 0 0 10px yellow;
     }
-    #score {
+    #score, #misses {
       position: absolute;
       top: 10px;
-      left: 10px;
       font-size: 20px;
     }
+    #score { left: 10px; }
+    #misses { left: 150px; }
     #message {
       display: none;
       position: absolute;
@@ -76,9 +77,7 @@
       cursor: pointer;
       box-shadow: 0 0 10px #000;
     }
-    #playAgain:hover {
-      background: #ffd60a;
-    }
+    #playAgain:hover { background: #ffd60a; }
   </style>
 </head>
 <body>
@@ -88,8 +87,10 @@
       <option value="Alex">Alex</option>
       <option value="Sammi">Sammi</option>
     </select>
+
     <div id="basket"></div>
     <div id="score">Score: 0</div>
+    <div id="misses">Misses: 0</div>
     <div id="message"></div>
     <button id="playAgain">Play Again</button>
   </div>
@@ -98,35 +99,38 @@
     const game = document.getElementById("game");
     const basket = document.getElementById("basket");
     const scoreDisplay = document.getElementById("score");
+    const missesDisplay = document.getElementById("misses");
     const message = document.getElementById("message");
     const playerSelect = document.getElementById("playerSelect");
     const playAgainBtn = document.getElementById("playAgain");
 
     let score = 0;
+    let misses = 0;
     const winScore = 10;
+    const loseLimit = 3;
+
     let basketX = window.innerWidth / 2 - 40;
     let currentPlayer = "";
     let gameOver = false;
-    let starInterval = null;
-    let starSpeed = 5; // initial fall speed (pixels per frame)
-    let spawnRate = 1000; // initial spawn rate (milliseconds)
 
-    // Move basket with arrow keys
+    let starInterval = null;
+    let starSpeed = 5;
+    let spawnRate = 1000;
+
+    // Move basket
     document.addEventListener("keydown", e => {
       if (e.key === "ArrowLeft") basketX -= 30;
       if (e.key === "ArrowRight") basketX += 30;
       basket.style.left = basketX + "px";
     });
 
-    // Update selected player
     playerSelect.addEventListener("change", () => {
       currentPlayer = playerSelect.value;
       resetGame();
     });
 
-    // Create stars
     function createStar() {
-      if (!currentPlayer || gameOver) return; // No stars if game not active
+      if (!currentPlayer || gameOver) return;
 
       const star = document.createElement("div");
       star.classList.add("star");
@@ -136,102 +140,115 @@
       moveStar(star);
     }
 
-    // Move stars downward
     function moveStar(star) {
       let fallSpeed = starSpeed;
-      let starInterval = setInterval(() => {
-        let starTop = parseInt(star.style.top);
-        star.style.top = starTop + fallSpeed + "px";
 
-        // Collision detection
-        let basketRect = basket.getBoundingClientRect();
-        let starRect = star.getBoundingClientRect();
+      let interval = setInterval(() => {
+        let top = parseInt(star.style.top);
+        star.style.top = top + fallSpeed + "px";
+
+        // Catch
+        let b = basket.getBoundingClientRect();
+        let s = star.getBoundingClientRect();
+
         if (
-          starRect.bottom >= basketRect.top &&
-          starRect.left >= basketRect.left &&
-          starRect.right <= basketRect.right
+          s.bottom >= b.top &&
+          s.left >= b.left &&
+          s.right <= b.right
         ) {
           score++;
           scoreDisplay.textContent = "Score: " + score;
           game.removeChild(star);
-          clearInterval(starInterval);
+          clearInterval(interval);
 
           if (score >= winScore) {
-            revealMessage();
+            winGame();
           } else {
             increaseDifficulty();
           }
         }
 
-        // Remove if it falls past bottom
-        if (starTop > window.innerHeight) {
+        // Miss
+        if (top > window.innerHeight) {
+          misses++;
+          missesDisplay.textContent = "Misses: " + misses;
           game.removeChild(star);
-          clearInterval(starInterval);
+          clearInterval(interval);
+
+          if (misses >= loseLimit) {
+            loseGame();
+          }
         }
+
       }, 50);
     }
 
-    // Increase difficulty gradually
+    // Difficulty scaling
     function increaseDifficulty() {
-      // Stars fall faster every 2 points
-      if (score % 2 === 0 && starSpeed < 15) {
-        starSpeed += 1;
-      }
-      // Spawn faster every 3 points
+      if (score % 2 === 0 && starSpeed < 15) starSpeed++;
       if (score % 3 === 0 && spawnRate > 400) {
         spawnRate -= 100;
-        restartStarSpawner();
+        restartSpawner();
       }
     }
 
-    // Drop stars at intervals
-    function startStarSpawner() {
+    function startSpawner() {
       starInterval = setInterval(createStar, spawnRate);
     }
 
-    function stopStarSpawner() {
+    function stopSpawner() {
       clearInterval(starInterval);
-      starInterval = null;
     }
 
-    function restartStarSpawner() {
-      stopStarSpawner();
-      startStarSpawner();
+    function restartSpawner() {
+      stopSpawner();
+      startSpawner();
     }
 
-    // Reveal personalized message
-    function revealMessage() {
+    // Win
+    function winGame() {
       gameOver = true;
-      stopStarSpawner();
-      let msg = "";
-      if (currentPlayer === "Alex") {
-        msg = "🌟 Alex, you did it! Secret unlocked: 'The universe is brighter because of you.' 🌟";
-      } else if (currentPlayer === "Sammi") {
-        msg = "✨ Sammi, amazing! Secret unlocked: 'Your light shines stronger than the stars.' ✨";
-      }
+      stopSpawner();
+
+      let msg = currentPlayer === "Alex"
+        ? "🌟 Alex, you did it! Secret unlocked: 'The universe is brighter because of you.' 🌟"
+        : "✨ Sammi, amazing! Secret unlocked: 'Your light shines stronger than the stars.' ✨";
+
       message.textContent = msg;
       message.style.display = "block";
       playAgainBtn.style.display = "block";
     }
 
-    // Reset game
+    // Lose
+    function loseGame() {
+      gameOver = true;
+      stopSpawner();
+
+      message.textContent = "💀 Game Over — Try Again!";
+      message.style.display = "block";
+      playAgainBtn.style.display = "block";
+    }
+
+    // Reset
     function resetGame() {
       score = 0;
+      misses = 0;
       starSpeed = 5;
       spawnRate = 1000;
       gameOver = false;
+
       scoreDisplay.textContent = "Score: 0";
+      missesDisplay.textContent = "Misses: 0";
+
       message.style.display = "none";
       playAgainBtn.style.display = "none";
 
-      // Remove any leftover stars
-      document.querySelectorAll(".star").forEach(star => star.remove());
+      document.querySelectorAll(".star").forEach(s => s.remove());
 
-      stopStarSpawner();
-      if (currentPlayer) startStarSpawner();
+      stopSpawner();
+      if (currentPlayer) startSpawner();
     }
 
-    // Play again button
     playAgainBtn.addEventListener("click", resetGame);
   </script>
 </body>
