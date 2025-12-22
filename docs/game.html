@@ -247,11 +247,10 @@
       document.querySelectorAll(".star").forEach(s => s.remove());
 
       stopSpawner();
-      window.reload();
-      // if (currentPlayer) startSpawner();
+      if (currentPlayer) startSpawner();
     }
 
-    playAgainBtn.addEventListener("click", resetGame);
+    playAgainBtn.addEventListener("click", () => window.reload());
   </script>
 </body>
 </html>
