@@ -122,10 +122,6 @@
     let starSpeed = 5;
     let spawnRate = 1000;
 
-    if (score > 0 && currentPlayer) {
-      console.log(score, currentPlayer);
-      playerSelect.setAttribute("disabled", true);
-    }
     
     // Move basket
     document.addEventListener("keydown", e => {
@@ -185,6 +181,10 @@
           } else {
             increaseDifficulty();
           }
+        }
+        if (score > 0 && currentPlayer) {
+          console.log(score, currentPlayer);
+          playerSelect.setAttribute("disabled", true);
         }
 
         // Miss
