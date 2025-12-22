@@ -63,7 +63,7 @@
       font-size: 16px;
       padding: 5px;
     }
-    #playAgain {
+    #playAgain, #okButton {
       display: none;
       position: absolute;
       top: 55%;
@@ -95,6 +95,7 @@
     <div id="instructions"></div>
     <div id="message"></div>
     <button id="playAgain">Play Again</button>
+    <button id="ok">Got it!</button>
   </div>
 
   <script>
@@ -105,6 +106,7 @@
     const message = document.getElementById("message");
     const playerSelect = document.getElementById("playerSelect");
     const playAgainBtn = document.getElementById("playAgain");
+    const okBtn = document.getElementById("ok");
     const instructions = document.getElementById("instructions");
 
     let score = 0;
@@ -134,8 +136,11 @@
 
     playerSelect.addEventListener("change", () => {
       currentPlayer = playerSelect.value;
-      instructions.textContent = "Use the left and right arrows to catch 10 stars and get the clue!";
-      resetGame();
+      message.textContent = "Use the left and right arrows to catch 10 stars and get the clue! Miss 10 stars and lose the game!";
+      message.style.display = "block";
+      okBtn.style.display = "block";
+
+      instructions.textContent = "";
     });
 
     instructions.textContent = "Please select a player";
@@ -264,6 +269,11 @@
     }
 
     playAgainBtn.addEventListener("click", () => window.location.reload());
+    okBtn.addEventListener("click", () => {       
+      message.style.display = "none";
+      okBtn.style.display = "none";
+      resetGame();
+    });
   </script>
 </body>
 </html>
