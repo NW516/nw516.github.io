@@ -247,7 +247,8 @@
       document.querySelectorAll(".star").forEach(s => s.remove());
 
       stopSpawner();
-      if (currentPlayer) startSpawner();
+      window.reload();
+      // if (currentPlayer) startSpawner();
     }
 
     playAgainBtn.addEventListener("click", resetGame);
