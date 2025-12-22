@@ -134,14 +134,11 @@
 
     playerSelect.addEventListener("change", () => {
       currentPlayer = playerSelect.value;
+      instructions.textContent = "Use the left and right arrows to catch 10 stars and get the clue!";
       resetGame();
     });
 
-    if (currentPlayer) {
-      instructions.textContent = "Use the left and right arrows to catch 10 stars and get the clue!";
-    } else {
-      instructions.textContent = "Please select a player";
-    }
+    instructions.textContent = "Please select a player";
     
     function createStar() {
       if (!currentPlayer || gameOver) return;
