@@ -82,7 +82,7 @@
 </head>
 <body>
   <div id="game">
-    <select id="playerSelect" disabled={score > 0} >
+    <select id="playerSelect">
       <option value="">-- Select Player --</option>
       <option value="Alex">Alex</option>
       <option value="Sammi">Sammi</option>
@@ -119,6 +119,9 @@
     let starSpeed = 5;
     let spawnRate = 1000;
 
+    if (score > 0 && currentPlayer) {
+      playerSelect.setAttribute("disabled", true);
+    }
     
     // Move basket
     document.addEventListener("keydown", e => {
