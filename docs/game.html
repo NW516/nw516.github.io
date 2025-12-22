@@ -91,6 +91,7 @@
     <div id="basket"></div>
     <div id="score">Score: 0</div>
     <div id="misses">Misses: 0</div>
+    <div id="instructions"></div>
     <div id="message"></div>
     <button id="playAgain">Play Again</button>
   </div>
@@ -103,6 +104,7 @@
     const message = document.getElementById("message");
     const playerSelect = document.getElementById("playerSelect");
     const playAgainBtn = document.getElementById("playAgain");
+    const instructions = document.getElementById("instructions");
 
     let score = 0;
     let misses = 0;
@@ -117,6 +119,7 @@
     let starSpeed = 5;
     let spawnRate = 1000;
 
+    
     // Move basket
     document.addEventListener("keydown", e => {
       if (e.key === "ArrowLeft") basketX -= 30;
@@ -129,6 +132,12 @@
       resetGame();
     });
 
+    if (currentPlayer) {
+      instructions.textContent = "Please select a player";
+    else {
+      instructions.textContent = "Use the left and right arrows to catch 10 stars and get the clue!";
+    }
+    
     function createStar() {
       if (!currentPlayer || gameOver) return;
 
@@ -163,6 +172,7 @@
 
           if (score >= winScore) {
             winGame();
+            clearInterval(interval);
             return;
           } else {
             increaseDifficulty();
