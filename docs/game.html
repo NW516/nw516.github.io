@@ -163,10 +163,9 @@
 
           if (score >= winScore) {
             winGame();
+          } else {
+            increaseDifficulty();
           }
-          // } else {
-          //   increaseDifficulty();
-          // }
         }
 
         // Miss
@@ -188,7 +187,7 @@
     function increaseDifficulty() {
       if (score % 2 === 0 && starSpeed < 15) starSpeed++;
       if (score % 3 === 0 && spawnRate > 400) {
-        spawnRate -= 100;
+        spawnRate -= 50;
         restartSpawner();
       }
     }
