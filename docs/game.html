@@ -82,7 +82,7 @@
 </head>
 <body>
   <div id="game">
-    <select id="playerSelect">
+    <select id="playerSelect" disabled={playerSelect && score > 0} >
       <option value="">-- Select Player --</option>
       <option value="Alex">Alex</option>
       <option value="Sammi">Sammi</option>
