@@ -156,8 +156,9 @@
 
       let interval = setInterval(() => {
         let top = parseInt(star.style.top);
-        star.style.top = top + fallSpeed + "px";
-
+        if (score < winScore) {
+          star.style.top = top + fallSpeed + "px";
+        }
         // Catch
         let b = basket.getBoundingClientRect();
         let s = star.getBoundingClientRect();
