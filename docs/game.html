@@ -86,7 +86,7 @@
       <option value="">-- Select Player --</option>
       <option value="Alex">Alex</option>
       <option value="Sammi">Sammi</option>
-    </select> {score}
+    </select>
 
     <div id="basket"></div>
     <div id="score">Score: 0</div>
@@ -120,6 +120,7 @@
     let spawnRate = 1000;
 
     if (score > 0 && currentPlayer) {
+      console.log(score, currentPlayer);
       playerSelect.setAttribute("disabled", true);
     }
     
