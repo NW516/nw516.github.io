@@ -1,0 +1,534 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Santa's Present Panic!</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 20px;
+    background: #071b35;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+  }
+
+  h1 {
+    color: #ffcf4a;
+    font-size: clamp(26px, 5vw, 42px);
+    margin: 10px 0;
+  }
+
+  .subtitle {
+    color: #c9d9ec;
+    margin-bottom: 20px;
+  }
+
+  #setup {
+    margin: 0 auto 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  select, button {
+    padding: 11px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+
+  select {
+    background: white;
+    color: #172b45;
+  }
+
+  button {
+    background: #e63946;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #ff5260;
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  #game {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    height: min(65vh, 540px);
+    min-height: 350px;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 3px solid #d7e9ff;
+    border-radius: 14px;
+    background:
+      radial-gradient(circle at 20% 20%, #ffffff 1px, transparent 2px),
+      radial-gradient(circle at 70% 40%, #ffffff 1px, transparent 2px),
+      radial-gradient(circle at 40% 70%, #ffffff 1px, transparent 2px),
+      linear-gradient(#102d58, #245b83);
+    background-size: 80px 80px, 110px 110px, 130px 130px, auto;
+    touch-action: none;
+  }
+
+  #hud {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 18px;
+    font-size: 18px;
+    font-weight: bold;
+    position: relative;
+    z-index: 2;
+  }
+
+  #player {
+    position: absolute;
+    bottom: 18px;
+    left: 0;
+    width: 86px;
+    height: 55px;
+    font-size: 48px;
+    line-height: 55px;
+    text-align: center;
+    user-select: none;
+  }
+
+  .falling {
+    position: absolute;
+    top: 0;
+    width: 36px;
+    height: 36px;
+    font-size: 30px;
+    line-height: 36px;
+    text-align: center;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  #overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    background: rgba(3, 17, 38, 0.91);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  #result {
+    max-width: 500px;
+  }
+
+  #result h2 {
+    font-size: 32px;
+    color: #ffcf4a;
+  }
+
+  #result p {
+    font-size: 19px;
+    line-height: 1.5;
+  }
+
+  #secret {
+    color: #ffe27a;
+    font-size: 22px !important;
+    font-weight: bold;
+    margin: 25px 0;
+  }
+
+  #instructions {
+    color: #c9d9ec;
+    font-size: 14px;
+    margin: 15px auto;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 500px) {
+    #hud {
+      font-size: 15px;
+      padding: 12px 8px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<h1>🎄 Santa's Present Panic! 🎅</h1>
+
+<p class="subtitle">
+  Help Santa collect presents before Christmas!
+</p>
+
+<div id="setup">
+  <label for="playerSelect">Who's playing?</label>
+
+  <select id="playerSelect">
+    <option value="Alex">Alex</option>
+    <option value="Sammi">Sammi</option>
+  </select>
+
+  <button id="startBtn">Start Game</button>
+</div>
+
+<div id="game">
+
+  <div id="hud">
+    <div id="score">🎁 Presents: 0 / 12</div>
+    <div id="lives">❤️ Lives: 3</div>
+  </div>
+
+  <div id="player">🛷</div>
+
+  <div id="overlay">
+    <div id="result">
+      <h2 id="resultTitle"></h2>
+      <p id="resultText"></p>
+      <p id="secret"></p>
+      <button id="againBtn">Play Again</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="instructions">
+  ⬅️ ➡️ Use your arrow keys or A / D to move Santa's sleigh.<br>
+  📱 On a touchscreen, drag left and right to steer.<br>
+  🎁 Catch presents. Avoid the coal!
+</div>
+
+<script>
+  // --------------------------------
+  // GAME SETTINGS
+  // --------------------------------
+
+  const WIN_SCORE = 12;
+  const MAX_LIVES = 3;
+
+  const messages = {
+    Alex: "🌟 Alex, you've officially made Santa's nice list! Your secret clue: Place to sit, expressed in fractions.",
+    Sammi: "✨ Sammi, you've saved Christmas! Your secret clue: Nobody has been allowed here for a few weeks."
+  };
+
+  // --------------------------------
+  // DOM ELEMENTS
+  // --------------------------------
+
+  const game = document.getElementById("game");
+  const player = document.getElementById("player");
+  const scoreDisplay = document.getElementById("score");
+  const livesDisplay = document.getElementById("lives");
+  const playerSelect = document.getElementById("playerSelect");
+  const startBtn = document.getElementById("startBtn");
+  const againBtn = document.getElementById("againBtn");
+  const overlay = document.getElementById("overlay");
+  const resultTitle = document.getElementById("resultTitle");
+  const resultText = document.getElementById("resultText");
+  const secret = document.getElementById("secret");
+
+  // --------------------------------
+  // GAME STATE
+  // --------------------------------
+
+  let score = 0;
+  let lives = MAX_LIVES;
+  let playing = false;
+  let currentPlayer = "Alex";
+
+  let playerX = 0;
+  let objects = [];
+
+  let lastTime = 0;
+  let spawnTimer = 0;
+  let animationId = null;
+
+  const keys = {
+    left: false,
+    right: false
+  };
+
+  const PLAYER_WIDTH = 86;
+  const OBJECT_SIZE = 36;
+
+  // --------------------------------
+  // PLAYER MOVEMENT
+  // --------------------------------
+
+  document.addEventListener("keydown", (e) => {
+    if (!playing) return;
+
+    if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+      keys.left = true;
+      e.preventDefault();
+    }
+
+    if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+      keys.right = true;
+      e.preventDefault();
+    }
+  });
+
+  document.addEventListener("keyup", (e) => {
+    if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+      keys.left = false;
+    }
+
+    if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+      keys.right = false;
+    }
+  });
+
+  window.addEventListener("blur", () => {
+    keys.left = false;
+    keys.right = false;
+  });
+
+  // Touch and mouse controls
+  game.addEventListener("pointermove", (e) => {
+    if (!playing) return;
+
+    const rect = game.getBoundingClientRect();
+
+    playerX = e.clientX - rect.left - PLAYER_WIDTH / 2;
+    clampPlayer();
+    updatePlayerPosition();
+  });
+
+  function clampPlayer() {
+    playerX = Math.max(
+      0,
+      Math.min(game.clientWidth - PLAYER_WIDTH, playerX)
+    );
+  }
+
+  function updatePlayerPosition() {
+    player.style.left = playerX + "px";
+  }
+
+  // --------------------------------
+  // START / RESET GAME
+  // --------------------------------
+
+  function startGame() {
+    if (playing) return;
+
+    // Cancel any previous animation
+    if (animationId !== null) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+
+    // Clear old objects
+    objects.forEach(obj => obj.element.remove());
+    objects = [];
+
+    score = 0;
+    lives = MAX_LIVES;
+    spawnTimer = 0;
+    lastTime = 0;
+
+    currentPlayer = playerSelect.value;
+
+    playerX = (game.clientWidth - PLAYER_WIDTH) / 2;
+    updatePlayerPosition();
+
+    scoreDisplay.textContent = `🎁 Presents: 0 / ${WIN_SCORE}`;
+    livesDisplay.textContent = `❤️ Lives: ${MAX_LIVES}`;
+
+    overlay.style.display = "none";
+
+    playerSelect.disabled = true;
+    startBtn.disabled = true;
+
+    playing = true;
+
+    animationId = requestAnimationFrame(gameLoop);
+  }
+
+  startBtn.addEventListener("click", startGame);
+  againBtn.addEventListener("click", () => {
+    playerSelect.disabled = false;
+    startBtn.disabled = false;
+    startGame();
+  });
+
+  // --------------------------------
+  // CREATE FALLING OBJECTS
+  // --------------------------------
+
+  function createObject() {
+    const isCoal = Math.random() < 0.25;
+
+    const element = document.createElement("div");
+    element.className = "falling";
+
+    element.textContent = isCoal ? "🪨" : "🎁";
+
+    const x = Math.random() *
+      (game.clientWidth - OBJECT_SIZE);
+
+    element.style.left = x + "px";
+
+    game.appendChild(element);
+
+    objects.push({
+      element,
+      x,
+      y: -OBJECT_SIZE,
+      type: isCoal ? "coal" : "present"
+    });
+  }
+
+  // --------------------------------
+  // UPDATE GAME
+  // --------------------------------
+
+  function gameLoop(timestamp) {
+    if (!playing) return;
+
+    // Delta time keeps movement consistent
+    // across different computer refresh rates.
+    const dt = lastTime
+      ? Math.min((timestamp - lastTime) / 1000, 0.05)
+      : 0;
+
+    lastTime = timestamp;
+
+    // Difficulty increases with score
+    const fallSpeed = 180 + score * 13;
+
+    const spawnRate = Math.max(
+      0.35,
+      0.95 - score * 0.045
+    );
+
+    // Move player
+    if (keys.left) playerX -= 340 * dt;
+    if (keys.right) playerX += 340 * dt;
+
+    clampPlayer();
+    updatePlayerPosition();
+
+    // Spawn objects
+    spawnTimer += dt;
+
+    if (spawnTimer >= spawnRate) {
+      spawnTimer = 0;
+      createObject();
+    }
+
+    // Collision boundaries
+    const playerTop =
+      game.clientHeight - 18 - 55;
+
+    // Move and check falling objects
+    for (let i = objects.length - 1; i >= 0; i--) {
+      const obj = objects[i];
+
+      obj.y += fallSpeed * dt;
+      obj.element.style.top = obj.y + "px";
+
+      const collision =
+        obj.y + OBJECT_SIZE >= playerTop &&
+        obj.y <= playerTop + 55 &&
+        obj.x + OBJECT_SIZE >= playerX &&
+        obj.x <= playerX + PLAYER_WIDTH;
+
+      if (collision) {
+        if (obj.type === "present") {
+          score++;
+          scoreDisplay.textContent =
+            `🎁 Presents: ${score} / ${WIN_SCORE}`;
+        } else {
+          lives--;
+          livesDisplay.textContent =
+            `❤️ Lives: ${lives}`;
+        }
+
+        obj.element.remove();
+        objects.splice(i, 1);
+
+        // Check win
+        if (score >= WIN_SCORE) {
+          endGame(true);
+          return;
+        }
+
+        // Check loss
+        if (lives <= 0) {
+          endGame(false);
+          return;
+        }
+
+        continue;
+      }
+
+      // Remove objects that reach the bottom
+      if (obj.y > game.clientHeight) {
+        obj.element.remove();
+        objects.splice(i, 1);
+      }
+    }
+
+    animationId = requestAnimationFrame(gameLoop);
+  }
+
+  // --------------------------------
+  // END GAME
+  // --------------------------------
+
+  function endGame(won) {
+    playing = false;
+
+    cancelAnimationFrame(animationId);
+    animationId = null;
+
+    keys.left = false;
+    keys.right = false;
+
+    // Remove remaining falling objects
+    objects.forEach(obj => obj.element.remove());
+    objects = [];
+
+    playerSelect.disabled = false;
+    startBtn.disabled = false;
+
+    if (won) {
+      resultTitle.textContent = "🎉 YOU SAVED CHRISTMAS! 🎉";
+      resultText.textContent =
+        `${currentPlayer}, you collected all ${WIN_SCORE} presents!`;
+
+      secret.textContent = messages[currentPlayer];
+    } else {
+      resultTitle.textContent = "💀 OH NO! GAME OVER!";
+      resultText.textContent =
+        `${currentPlayer}, Santa ran out of lives! Better luck next time.`;
+
+      secret.textContent = "";
+    }
+
+    overlay.style.display = "flex";
+  }
+
+</script>
+
+</body>
+</html>
